@@ -6,6 +6,13 @@ const session = require("express-session");
 
 const app = express();
 
+const requireLogin = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+};
+
 mongoose
   .connect("mongodb://127.0.0.1:27017/authDemo")
   .then(() => {
@@ -53,11 +60,12 @@ app.post("/register", async (req, res) => {
   req.session.user_id = user._id;
   res.redirect("/secret");
 });
-app.get("/secret", (req, res) => {
-  if (!req.session.user_id) {
-    res.redirect("/login");
-  }
-  res.send("This is a secret");
+app.post("/logout", (req, res) => {
+  req.session.user_id = null;
+  res.redirect("/login");
+});
+app.get("/secret", requireLogin, (req, res) => {
+  res.render("secret");
 });
 
 app.listen(3000, () => {
